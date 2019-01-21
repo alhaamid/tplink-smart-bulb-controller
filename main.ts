@@ -4,7 +4,8 @@ import { Client } from 'tplink-smarthome-api';
 // import fs from 'fs';
 // import mic from 'mic';
 
-const TRANSITION_PERIOD = 1000;
+const TRANSITION_PERIOD: number = 10;
+var MODE: string = "disco";
 var START_COLOR = {hue: 0, saturation: 100, brightness: 100, transition_period: TRANSITION_PERIOD};
 
 const client = new Client();
@@ -24,6 +25,26 @@ function print(...args) {
     console.log(...args);
 }
 
+function updateHue(hue: number) {
+    var new_hue: number = hue;
+    if (MODE == "disco") {
+        new_hue += 70;
+    } else if (MODE == "gradual") {
+        new_hue += 10;
+    } else {
+        print("unknown mode");
+    }
+    return hueLoopCorrection(new_hue);
+}
+
+function hueLoopCorrection(hue: number) {
+    if (hue >= 360) {
+        return hueLoopCorrection(hue - 360);
+    } else {
+        return hue;
+    }
+}
+
 function startChangingColors(bulb) {
     bulb.lighting.getLightState()
     .then(state => {
@@ -32,19 +53,19 @@ function startChangingColors(bulb) {
             saturation: state.saturation, 
             brightness: state.brightness
         };
-        var next_hue = current_color_scheme.hue + 30;
-        if (next_hue <= 360) {
-            var next_color_scheme = {
-                hue: next_hue, 
-                saturation: 100, 
-                brightness: 100, 
-                transition_period: TRANSITION_PERIOD
-            };
-            
-            print("changing color to", next_color_scheme);
-            bulb.lighting.setLightState(next_color_scheme)
-            .then(done => { setTimeout(() => {startChangingColors(bulb);}, TRANSITION_PERIOD) })
-            .catch(err => { setTimeout(() => {startChangingColors(bulb);}, TRANSITION_PERIOD) });
-        }
+        
+        var next_hue = updateHue(current_color_scheme.hue);
+
+        var next_color_scheme = {
+            hue: next_hue, 
+            saturation: 100, 
+            brightness: 100, 
+            transition_period: TRANSITION_PERIOD
+        };
+        
+        print("changing color of", bulb.alias, "to", next_color_scheme.hue);
+        bulb.lighting.setLightState(next_color_scheme)
+        .then(done => { setTimeout(() => {startChangingColors(bulb);}, TRANSITION_PERIOD) })
+        .catch(err => { setTimeout(() => {startChangingColors(bulb);}, TRANSITION_PERIOD) });
     })
 }
