@@ -1,5 +1,8 @@
 // https://github.com/plasticrake/tplink-smarthome-api/blob/master/API.md
 // https://www.npmjs.com/package/tplink-smarthome-api
+// https://stackoverflow.com/questions/29215531/detect-audio-frequency-from-microphone-with-node-js
+// https://www.npmjs.com/package/mic
+
 import { Client } from 'tplink-smarthome-api';
 // import fs from 'fs';
 // import mic from 'mic';
@@ -20,30 +23,6 @@ client.startDiscovery().on('device-new', (bulb) => {
         }
     });
 });
-
-function print(...args) {
-    console.log(...args);
-}
-
-function updateHue(hue: number) {
-    var new_hue: number = hue;
-    if (MODE == "disco") {
-        new_hue += 70;
-    } else if (MODE == "gradual") {
-        new_hue += 10;
-    } else {
-        print("unknown mode");
-    }
-    return hueLoopCorrection(new_hue);
-}
-
-function hueLoopCorrection(hue: number) {
-    if (hue >= 360) {
-        return hueLoopCorrection(hue - 360);
-    } else {
-        return hue;
-    }
-}
 
 function startChangingColors(bulb) {
     bulb.lighting.getLightState()
@@ -68,4 +47,28 @@ function startChangingColors(bulb) {
         .then(done => { setTimeout(() => {startChangingColors(bulb);}, TRANSITION_PERIOD) })
         .catch(err => { setTimeout(() => {startChangingColors(bulb);}, TRANSITION_PERIOD) });
     })
+}
+
+function updateHue(hue: number) {
+    var new_hue: number = hue;
+    if (MODE == "disco") {
+        new_hue += 70;
+    } else if (MODE == "gradual") {
+        new_hue += 10;
+    } else {
+        print("unknown mode");
+    }
+    return hueLoopCorrection(new_hue);
+}
+
+function hueLoopCorrection(hue: number) {
+    if (hue >= 360) {
+        return hueLoopCorrection(hue - 360);
+    } else {
+        return hue;
+    }
+}
+
+function print(...args) {
+    console.log(...args);
 }
